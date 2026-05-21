@@ -26,7 +26,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 - [x] **8. Fetch the Open-Meteo forecast** — async function `getForecast(lat, lon)` calling `https://api.open-meteo.com/v1/forecast?latitude=…&longitude=…&hourly=temperature_2m,apparent_temperature&timezone=auto&forecast_days=1`. Throws on non-OK responses. Returns parsed JSON.
 
-- [ ] **9. Reverse-geocode the location name** — async function `reverseGeocode(lat, lon)` hitting Open-Meteo's geocoding reverse endpoint. Returns `"{name}, {country_code}"` on success, `null` on failure. Caller falls back to rounded coords.
+- [x] **9. Reverse-geocode the location name** — async function `reverseGeocode(lat, lon)` hitting Open-Meteo's geocoding reverse endpoint. Returns `"{name}, {country_code}"` on success, `null` on failure. Caller falls back to rounded coords.
 
 ## Decision
 

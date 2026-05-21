@@ -148,6 +148,26 @@
         }
         return await res.json();
       }
+      async function reverseGeocode(lat, lon) {
+        const url =
+          "https://geocoding-api.open-meteo.com/v1/reverse" +
+          "?latitude=" +
+          encodeURIComponent(lat) +
+          "&longitude=" +
+          encodeURIComponent(lon) +
+          "&count=1&language=en&format=json";
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return null;
+          const data = await res.json();
+          const r = data && data.results && data.results[0];
+          if (!r || !r.name) return null;
+          const cc = r.country_code ? ", " + r.country_code : "";
+          return r.name + cc;
+        } catch (e) {
+          return null;
+        }
+      }
     </script>
   </body>
 </html>
