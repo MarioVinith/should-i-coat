@@ -132,6 +132,22 @@
           );
         });
       }
+      async function getForecast(lat, lon) {
+        const url =
+          "https://api.open-meteo.com/v1/forecast" +
+          "?latitude=" +
+          encodeURIComponent(lat) +
+          "&longitude=" +
+          encodeURIComponent(lon) +
+          "&hourly=temperature_2m,apparent_temperature" +
+          "&timezone=auto" +
+          "&forecast_days=1";
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error("Forecast request failed: " + res.status);
+        }
+        return await res.json();
+      }
     </script>
   </body>
 </html>
