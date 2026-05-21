@@ -8,7 +8,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 ## Scaffolding
 
-- [ ] **1. Create the bare `index.html` shell** — doctype, `<html lang="en">`, `<head>` with charset / viewport / theme-color / `<title>Should I Coat?</title>`, empty `<body>`. Inline `<style>` and `<script>` blocks exist but are empty.
+- [x] **1. Create the bare `index.html` shell** — doctype, `<html lang="en">`, `<head>` with charset / viewport / theme-color / `<title>Should I Coat?</title>`, empty `<body>`. Inline `<style>` and `<script>` blocks exist but are empty.
 
 - [ ] **2. Add the page-level styles and dark background** — CSS variables for `--bg #0b0d12`, `--fg #f6f7fb`, `--muted #8a93a6`, `--card #141823`, plus the three verdict colors `--puff #3b5fe6`, `--normal #1fb88e`, `--none #f5a623`. Set `html, body` to dark background, white foreground, system sans font, no margin. Body becomes a vertical flex column at min-height 100vh.
 
