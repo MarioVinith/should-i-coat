@@ -34,7 +34,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 - [x] **11. Implement the verdict computation** — a pure function `decide(apparentHourly, hourlyTimes)` that filters readings to local hours 8 through 20 inclusive, classifies each as `puff` / `normal` / `none` by the rule (`<10`, `10–18`, `>18`), majority votes, breaks ties toward the colder bucket, and returns `{ key, label }` using the exact copy `Bundle up.` / `Pack a jacket.` / `You're good.`.
 
-- [ ] **12. Render the verdict** — inside `run()`, after getting the forecast, call `decide()` and update `#verdict`: remove `.loading`, add `.puff` / `.normal` / `.none`, set `textContent` to the label. Set `#sub` to `Today: {min_actual}°–{max_actual}° · Feels like {min_app}°–{max_app}°`, all rounded to whole degrees, using daily min/max for actuals and min/max across the hourly apparent array for feels-like.
+- [x] **12. Render the verdict** — inside `run()`, after getting the forecast, call `decide()` and update `#verdict`: remove `.loading`, add `.puff` / `.normal` / `.none`, set `textContent` to the label. Set `#sub` to `Today: {min_actual}°–{max_actual}° · Feels like {min_app}°–{max_app}°`, all rounded to whole degrees, using daily min/max for actuals and min/max across the hourly apparent array for feels-like.
 
 ## Chart
 

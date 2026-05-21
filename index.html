@@ -195,6 +195,7 @@
         const verdictEl = document.getElementById("verdict");
         const locEl = document.getElementById("loc");
         const noteEl = document.getElementById("note");
+        const subEl = document.getElementById("sub");
         const { lat, lon, fallback } = await getLocation();
         const name = await reverseGeocode(lat, lon);
         locEl.textContent =
@@ -203,9 +204,27 @@
           noteEl.textContent = "Couldn't get your location. Showing Melbourne.";
         }
         const forecast = await getForecast(lat, lon);
-        console.log(forecast);
-        verdictEl.classList.remove("loading");
-        verdictEl.textContent = "Working…";
+        const times = forecast.hourly.time;
+        const actuals = forecast.hourly.temperature_2m;
+        const apparents = forecast.hourly.apparent_temperature;
+        const verdict = decide(apparents, times);
+        verdictEl.classList.remove("loading", "puff", "normal", "none");
+        verdictEl.classList.add(verdict.key);
+        verdictEl.textContent = verdict.label;
+        const minA = Math.round(Math.min(...actuals));
+        const maxA = Math.round(Math.max(...actuals));
+        const minF = Math.round(Math.min(...apparents));
+        const maxF = Math.round(Math.max(...apparents));
+        subEl.textContent =
+          "Today: " +
+          minA +
+          "°–" +
+          maxA +
+          "° · Feels like " +
+          minF +
+          "°–" +
+          maxF +
+          "°";
       }
       run();
     </script>
