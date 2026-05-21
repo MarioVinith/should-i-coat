@@ -236,8 +236,42 @@
           const h = new Date(t).getHours();
           return h < 10 ? "0" + h : "" + h;
         });
+        const decisionWindowPlugin = {
+          id: "decisionWindow",
+          beforeDatasetsDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            if (!chartArea || !scales.x) return;
+            const xScale = scales.x;
+            const startIdx = labels.findIndex((l) => parseInt(l, 10) === 8);
+            const endIdx = labels.findIndex((l) => parseInt(l, 10) === 20);
+            if (startIdx === -1 || endIdx === -1) return;
+            const xStart = xScale.getPixelForValue(startIdx);
+            const xEnd = xScale.getPixelForValue(endIdx);
+            ctx.save();
+            ctx.fillStyle = "rgba(255,255,255,0.06)";
+            ctx.fillRect(
+              xStart,
+              chartArea.top,
+              xEnd - xStart,
+              chartArea.bottom - chartArea.top
+            );
+            const nowHour = new Date().getHours();
+            const nowIdx = labels.findIndex((l) => parseInt(l, 10) === nowHour);
+            if (nowIdx !== -1) {
+              const xNow = xScale.getPixelForValue(nowIdx);
+              ctx.strokeStyle = "rgba(255,255,255,0.3)";
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(xNow, chartArea.top);
+              ctx.lineTo(xNow, chartArea.bottom);
+              ctx.stroke();
+            }
+            ctx.restore();
+          },
+        };
         return new Chart(ctx, {
           type: "line",
+          plugins: [decisionWindowPlugin],
           data: {
             labels: labels,
             datasets: [

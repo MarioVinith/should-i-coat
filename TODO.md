@@ -42,7 +42,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 - [x] **14. Render the two-line chart** — function `drawChart(times, actualTemps, apparentTemps)` building a Chart.js line chart with two datasets: actual (solid, color `rgba(246,247,251,0.8)`, no dash) and feels-like (dashed, `borderDash: [6, 4]`, color `#f5a623`). Labels are hours formatted `HH`. Y-axis ticks suffix `°`. No dots, smooth curves (tension 0.35), legend visible (Chart.js default position).
 
-- [ ] **15. Add the decision-window shading and now-line** — a small Chart.js plugin (or `afterDraw` hook) that draws a faint rectangle behind the data for the 8am–8pm region (`rgba(255,255,255,0.06)`) and a vertical line at the current hour (`rgba(255,255,255,0.3)`, 1px). These give visual context for the verdict at a glance.
+- [x] **15. Add the decision-window shading and now-line** — a small Chart.js plugin (or `afterDraw` hook) that draws a faint rectangle behind the data for the 8am–8pm region (`rgba(255,255,255,0.06)`) and a vertical line at the current hour (`rgba(255,255,255,0.3)`, 1px). These give visual context for the verdict at a glance.
 
 ## Polish
 
