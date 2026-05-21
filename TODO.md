@@ -30,7 +30,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 ## Decision
 
-- [ ] **10. Wire up the end-to-end flow with no verdict logic yet** — top-level `async function run()` that: gets location, reverse-geocodes, sets the header location text, fetches forecast, and logs the result to the console. Sets the fallback note when geolocation fell back. Replaces the `#verdict` text with a placeholder `Working…` (no class yet).
+- [x] **10. Wire up the end-to-end flow with no verdict logic yet** — top-level `async function run()` that: gets location, reverse-geocodes, sets the header location text, fetches forecast, and logs the result to the console. Sets the fallback note when geolocation fell back. Replaces the `#verdict` text with a placeholder `Working…` (no class yet).
 
 - [ ] **11. Implement the verdict computation** — a pure function `decide(apparentHourly, hourlyTimes)` that filters readings to local hours 8 through 20 inclusive, classifies each as `puff` / `normal` / `none` by the rule (`<10`, `10–18`, `>18`), majority votes, breaks ties toward the colder bucket, and returns `{ key, label }` using the exact copy `Bundle up.` / `Pack a jacket.` / `You're good.`.
 
