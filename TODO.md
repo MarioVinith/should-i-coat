@@ -38,7 +38,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 ## Chart
 
-- [ ] **13. Add the chart card markup and Chart.js CDN script** — a `.chart-card` section in `<main>` containing a `.chart-head` row (label `Hourly temperature — today` and a range indicator) and a `<canvas id="chart">`. Add `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js">` in `<head>`. Style the card: rounded corners, `--card` background, internal padding, fixed canvas height (180px desktop, 140px mobile).
+- [x] **13. Add the chart card markup and Chart.js CDN script** — a `.chart-card` section in `<main>` containing a `.chart-head` row (label `Hourly temperature — today` and a range indicator) and a `<canvas id="chart">`. Add `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js">` in `<head>`. Style the card: rounded corners, `--card` background, internal padding, fixed canvas height (180px desktop, 140px mobile).
 
 - [ ] **14. Render the two-line chart** — function `drawChart(times, actualTemps, apparentTemps)` building a Chart.js line chart with two datasets: actual (solid, color `rgba(246,247,251,0.8)`, no dash) and feels-like (dashed, `borderDash: [6, 4]`, color `#f5a623`). Labels are hours formatted `HH`. Y-axis ticks suffix `°`. No dots, smooth curves (tension 0.35), legend visible (Chart.js default position).
 
