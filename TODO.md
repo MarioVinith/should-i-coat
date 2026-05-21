@@ -18,7 +18,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 - [x] **5. Style the verdict text** — `#verdict` font-size `clamp(56px, 18vw, 320px)`, weight 800, line-height 0.92, letter-spacing `-0.04em`. Add `.verdict.puff`, `.verdict.normal`, `.verdict.none` modifier classes that set color from the CSS variables, with a `color` transition.
 
-- [ ] **6. Add the loading-dots animation** — a `.loading::after` pseudo-element that cycles `''`, `'.'`, `'..'`, `'...'` via a keyframes animation, attached to `#verdict.loading`.
+- [x] **6. Add the loading-dots animation** — a `.loading::after` pseudo-element that cycles `''`, `'.'`, `'..'`, `'...'` via a keyframes animation, attached to `#verdict.loading`.
 
 ## Data layer
 
