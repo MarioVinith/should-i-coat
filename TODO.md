@@ -46,7 +46,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 ## Polish
 
-- [ ] **16. Handle the forecast-error case** — wrap the `getForecast` call in `try/catch`. On failure, remove `.loading`, set `#verdict` to `Sky unreachable`, set `#sub` to `The weather API didn't answer. Try refreshing.`, and skip rendering the chart.
+- [x] **16. Handle the forecast-error case** — wrap the `getForecast` call in `try/catch`. On failure, remove `.loading`, set `#verdict` to `Sky unreachable`, set `#sub` to `The weather API didn't answer. Try refreshing.`, and skip rendering the chart.
 
 - [ ] **17. Add `netlify.toml` and a short README** — `netlify.toml` with `publish = "."`, empty `command`, and the security headers block from `AGENTS.md`. `README.md` describes what the site is, the decision rule, how to deploy to Netlify via GitHub, and how to run the Ralph loop locally (`chmod +x ralph.sh && ./ralph.sh`).
 

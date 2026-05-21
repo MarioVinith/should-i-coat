@@ -341,7 +341,16 @@
         if (fallback) {
           noteEl.textContent = "Couldn't get your location. Showing Melbourne.";
         }
-        const forecast = await getForecast(lat, lon);
+        let forecast;
+        try {
+          forecast = await getForecast(lat, lon);
+        } catch (e) {
+          verdictEl.classList.remove("loading", "puff", "normal", "none");
+          verdictEl.textContent = "Sky unreachable";
+          subEl.textContent =
+            "The weather API didn't answer. Try refreshing.";
+          return;
+        }
         const times = forecast.hourly.time;
         const actuals = forecast.hourly.temperature_2m;
         const apparents = forecast.hourly.apparent_temperature;
