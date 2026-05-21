@@ -37,9 +37,9 @@
         flex-wrap: wrap;
         gap: 8px;
         padding: 20px 24px;
-        font-size: 12px;
+        font-size: clamp(13px, 1.2vw, 15px);
         text-transform: uppercase;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.14em;
         color: var(--muted);
       }
       header .brand {
@@ -48,12 +48,40 @@
       header #loc {
         text-align: right;
       }
+      main {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .verdict-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 24px 24px 8px;
+      }
+      #eyebrow {
+        font-size: clamp(18px, 2vw, 24px);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        font-weight: 500;
+      }
       #verdict {
-        font-size: clamp(56px, 18vw, 320px);
+        font-size: clamp(56px, 14vw, 240px);
         font-weight: 800;
-        line-height: 0.92;
+        line-height: 1;
         letter-spacing: -0.04em;
         transition: color 200ms ease;
+      }
+      #sub {
+        font-size: clamp(20px, 2.2vw, 28px);
+        color: var(--fg);
+        opacity: 0.85;
+        font-weight: 400;
+      }
+      #note {
+        font-size: clamp(15px, 1.6vw, 18px);
+        color: var(--muted);
       }
       #verdict.puff {
         color: var(--puff);
@@ -73,29 +101,34 @@
         background: var(--card);
         border-radius: 16px;
         padding: 20px;
-        margin: 24px;
+        margin: 12px 24px 24px;
       }
       .chart-head {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
         gap: 12px;
-        font-size: 12px;
+        font-size: clamp(13px, 1.2vw, 15px);
         text-transform: uppercase;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.14em;
         color: var(--muted);
         margin-bottom: 12px;
       }
       .chart-head .chart-range {
         text-align: right;
       }
-      #chart {
-        display: block;
+      .chart-canvas-wrap {
+        position: relative;
         width: 100%;
         height: 180px;
       }
+      #chart {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+      }
       @media (max-width: 640px) {
-        #chart {
+        .chart-canvas-wrap {
           height: 140px;
         }
       }
@@ -135,7 +168,9 @@
           <div class="chart-label">Hourly temperature — today</div>
           <div class="chart-range" id="chart-range"></div>
         </div>
-        <canvas id="chart"></canvas>
+        <div class="chart-canvas-wrap">
+          <canvas id="chart"></canvas>
+        </div>
       </section>
     </main>
     <script>
@@ -187,14 +222,42 @@
         return await res.json();
       }
       async function reverseGeocode(lat, lon) {
-        const url =
-          "https://geocoding-api.open-meteo.com/v1/reverse" +
-          "?latitude=" +
-          encodeURIComponent(lat) +
-          "&longitude=" +
-          encodeURIComponent(lon) +
-          "&count=1&language=en&format=json";
+        // Try BigDataCloud first — it returns suburb/locality (e.g. "St Kilda")
+        // alongside the city, which Open-Meteo's geocoder does not.
         try {
+          const url =
+            "https://api.bigdatacloud.net/data/reverse-geocode-client" +
+            "?latitude=" +
+            encodeURIComponent(lat) +
+            "&longitude=" +
+            encodeURIComponent(lon) +
+            "&localityLanguage=en";
+          const res = await fetch(url);
+          if (res.ok) {
+            const d = await res.json();
+            // Prefer suburb-level: `locality` (e.g. "St Kilda") over `city`.
+            const suburb = d.locality || d.localityInfo?.administrative?.find(
+              (a) => a.order >= 6
+            )?.name;
+            const city = d.city || d.principalSubdivision;
+            if (suburb && city && suburb !== city) {
+              return suburb + ", " + city;
+            }
+            if (city) return city;
+            if (suburb) return suburb;
+          }
+        } catch (e) {
+          // fall through to Open-Meteo
+        }
+        // Fallback: Open-Meteo geocoder (city-level only)
+        try {
+          const url =
+            "https://geocoding-api.open-meteo.com/v1/reverse" +
+            "?latitude=" +
+            encodeURIComponent(lat) +
+            "&longitude=" +
+            encodeURIComponent(lon) +
+            "&count=1&language=en&format=json";
           const res = await fetch(url);
           if (!res.ok) return null;
           const data = await res.json();
@@ -236,14 +299,18 @@
           const h = new Date(t).getHours();
           return h < 10 ? "0" + h : "" + h;
         });
+        // Compute these once — running findIndex inside the plugin on every
+        // redraw caused noticeable scroll jank.
+        const startIdx = labels.findIndex((l) => parseInt(l, 10) === 8);
+        const endIdx = labels.findIndex((l) => parseInt(l, 10) === 20);
+        const nowHour = new Date().getHours();
+        const nowIdx = labels.findIndex((l) => parseInt(l, 10) === nowHour);
         const decisionWindowPlugin = {
           id: "decisionWindow",
           beforeDatasetsDraw(chart) {
             const { ctx, chartArea, scales } = chart;
             if (!chartArea || !scales.x) return;
             const xScale = scales.x;
-            const startIdx = labels.findIndex((l) => parseInt(l, 10) === 8);
-            const endIdx = labels.findIndex((l) => parseInt(l, 10) === 20);
             if (startIdx === -1 || endIdx === -1) return;
             const xStart = xScale.getPixelForValue(startIdx);
             const xEnd = xScale.getPixelForValue(endIdx);
@@ -255,8 +322,6 @@
               xEnd - xStart,
               chartArea.bottom - chartArea.top
             );
-            const nowHour = new Date().getHours();
-            const nowIdx = labels.findIndex((l) => parseInt(l, 10) === nowHour);
             if (nowIdx !== -1) {
               const xNow = xScale.getPixelForValue(nowIdx);
               ctx.strokeStyle = "rgba(255,255,255,0.3)";
@@ -317,6 +382,7 @@
                 ticks: {
                   color: "#8a93a6",
                   callback: (v) => v + "°",
+                  stepSize: 2,
                 },
                 grid: { color: "rgba(255,255,255,0.05)" },
               },
@@ -335,11 +401,13 @@
         const noteEl = document.getElementById("note");
         const subEl = document.getElementById("sub");
         const { lat, lon, fallback } = await getLocation();
-        const name = await reverseGeocode(lat, lon);
-        locEl.textContent =
-          name || lat.toFixed(2) + ", " + lon.toFixed(2);
         if (fallback) {
+          locEl.textContent = "Melbourne (default)";
           noteEl.textContent = "Couldn't get your location. Showing Melbourne.";
+        } else {
+          const name = await reverseGeocode(lat, lon);
+          locEl.textContent =
+            name || lat.toFixed(2) + ", " + lon.toFixed(2);
         }
         let forecast;
         try {

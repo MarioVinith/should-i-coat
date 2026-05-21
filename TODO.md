@@ -50,6 +50,16 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 - [x] **17. Add `netlify.toml` and a short README** — `netlify.toml` with `publish = "."`, empty `command`, and the security headers block from `AGENTS.md`. `README.md` describes what the site is, the decision rule, how to deploy to Netlify via GitHub, and how to run the Ralph loop locally (`chmod +x ralph.sh && ./ralph.sh`).
 
+## Post-loop fixes (added after first run, not by Ralph)
+
+- [x] **18. Fix layout overlap, oversized chart, and scroll jank; bump small-text sizes** —
+  - Verdict text `line-height: 0.92` was making giant glyphs visually overlap the header. Set to `1` and capped the upper end of the `clamp()` at `14vw` / `240px` so it's still huge without being absurd on wide monitors.
+  - Gave `.verdict-wrap` `padding: 32px 24px` and `gap: 16px` so the eyebrow, verdict, sub, and note read as a hierarchy rather than a stack of touching divs.
+  - Chart was unbounded because `<canvas>` inline height styles are overridden by Chart.js when `maintainAspectRatio: false`. Wrapped the canvas in a `position: relative` container with fixed `180px` desktop / `140px` mobile height, and forced the canvas to fill it.
+  - Y-axis was auto-ticking by 1°. Added `stepSize: 2` to the y-scale so a typical 10° day shows ~5 gridlines, not 10. Visually compresses the chart.
+  - Scroll jank: the decision-window plugin was running three `findIndex` calls inside `beforeDatasetsDraw` on every frame. Hoisted those three indexes (8am, 8pm, current hour) out of the plugin closure so they're computed exactly once.
+  - Bumped eyebrow, sub, note, header, and chart-head from 12–16px to clamped values (`18–24px`, `20–28px`, `15–18px`, `13–15px`) so the small text is properly visible against the giant verdict.
+
 ---
 
 When every box above is ticked, append `STATUS: DONE` on a new line.
