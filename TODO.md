@@ -12,7 +12,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 - [x] **2. Add the page-level styles and dark background** — CSS variables for `--bg #0b0d12`, `--fg #f6f7fb`, `--muted #8a93a6`, `--card #141823`, plus the three verdict colors `--puff #3b5fe6`, `--normal #1fb88e`, `--none #f5a623`. Set `html, body` to dark background, white foreground, system sans font, no margin. Body becomes a vertical flex column at min-height 100vh.
 
-- [ ] **3. Build the header markup** — `<header>` with `.brand` (left, text `Should I Coat?`) and a `#loc` element (right, placeholder `—`). Small, uppercase, letter-spaced, muted color.
+- [x] **3. Build the header markup** — `<header>` with `.brand` (left, text `Should I Coat?`) and a `#loc` element (right, placeholder `—`). Small, uppercase, letter-spaced, muted color.
 
 - [ ] **4. Build the verdict block markup** — `<main>` containing a `.verdict-wrap` with: `#eyebrow` (`Today you should…`), `#verdict` (`Checking the sky` with a `.loading` class for the animated dots), `#sub` (empty placeholder), `#note` (empty placeholder for the fallback note).
 

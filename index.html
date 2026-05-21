@@ -29,9 +29,31 @@
         display: flex;
         flex-direction: column;
       }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 20px 24px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+      header .brand {
+        font-weight: 600;
+      }
+      header #loc {
+        text-align: right;
+      }
     </style>
   </head>
   <body>
+    <header>
+      <div class="brand">Should I Coat?</div>
+      <div id="loc">—</div>
+    </header>
     <script></script>
   </body>
 </html>
