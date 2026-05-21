@@ -168,6 +168,29 @@
           return null;
         }
       }
+      function decide(apparentHourly, hourlyTimes) {
+        const counts = { puff: 0, normal: 0, none: 0 };
+        for (let i = 0; i < hourlyTimes.length; i++) {
+          const hour = new Date(hourlyTimes[i]).getHours();
+          if (hour < 8 || hour > 20) continue;
+          const t = apparentHourly[i];
+          if (t == null) continue;
+          if (t < 10) counts.puff++;
+          else if (t <= 18) counts.normal++;
+          else counts.none++;
+        }
+        const order = ["puff", "normal", "none"];
+        const labels = {
+          puff: "Bundle up.",
+          normal: "Pack a jacket.",
+          none: "You're good.",
+        };
+        let winner = order[0];
+        for (const key of order) {
+          if (counts[key] > counts[winner]) winner = key;
+        }
+        return { key: winner, label: labels[winner] };
+      }
       async function run() {
         const verdictEl = document.getElementById("verdict");
         const locEl = document.getElementById("loc");
