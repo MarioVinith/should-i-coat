@@ -14,7 +14,7 @@ When every box below is ticked, append a final line: `STATUS: DONE`. The Ralph r
 
 - [x] **3. Build the header markup** — `<header>` with `.brand` (left, text `Should I Coat?`) and a `#loc` element (right, placeholder `—`). Small, uppercase, letter-spaced, muted color.
 
-- [ ] **4. Build the verdict block markup** — `<main>` containing a `.verdict-wrap` with: `#eyebrow` (`Today you should…`), `#verdict` (`Checking the sky` with a `.loading` class for the animated dots), `#sub` (empty placeholder), `#note` (empty placeholder for the fallback note).
+- [x] **4. Build the verdict block markup** — `<main>` containing a `.verdict-wrap` with: `#eyebrow` (`Today you should…`), `#verdict` (`Checking the sky` with a `.loading` class for the animated dots), `#sub` (empty placeholder), `#note` (empty placeholder for the fallback note).
 
 - [ ] **5. Style the verdict text** — `#verdict` font-size `clamp(56px, 18vw, 320px)`, weight 800, line-height 0.92, letter-spacing `-0.04em`. Add `.verdict.puff`, `.verdict.normal`, `.verdict.none` modifier classes that set color from the CSS variables, with a `color` transition.
 
