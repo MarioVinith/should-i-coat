@@ -229,6 +229,72 @@
         }
         return { key: winner, label: labels[winner] };
       }
+      function drawChart(times, actualTemps, apparentTemps) {
+        const ctx = document.getElementById("chart");
+        if (!ctx || typeof Chart === "undefined") return;
+        const labels = times.map((t) => {
+          const h = new Date(t).getHours();
+          return h < 10 ? "0" + h : "" + h;
+        });
+        return new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Actual",
+                data: actualTemps,
+                borderColor: "rgba(246,247,251,0.8)",
+                backgroundColor: "rgba(246,247,251,0.8)",
+                borderWidth: 2,
+                tension: 0.35,
+                pointRadius: 0,
+              },
+              {
+                label: "Feels like",
+                data: apparentTemps,
+                borderColor: "#f5a623",
+                backgroundColor: "#f5a623",
+                borderDash: [6, 4],
+                borderWidth: 2,
+                tension: 0.35,
+                pointRadius: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                ticks: {
+                  color: "#8a93a6",
+                  callback: function (value, index) {
+                    const label = this.getLabelForValue(value);
+                    const h = parseInt(label, 10);
+                    return h % 3 === 0 ? label : "";
+                  },
+                  maxRotation: 0,
+                  autoSkip: false,
+                },
+                grid: { color: "rgba(255,255,255,0.05)" },
+              },
+              y: {
+                ticks: {
+                  color: "#8a93a6",
+                  callback: (v) => v + "°",
+                },
+                grid: { color: "rgba(255,255,255,0.05)" },
+              },
+            },
+            plugins: {
+              legend: {
+                labels: { color: "#f6f7fb" },
+              },
+            },
+          },
+        });
+      }
       async function run() {
         const verdictEl = document.getElementById("verdict");
         const locEl = document.getElementById("loc");
@@ -263,6 +329,7 @@
           "°–" +
           maxF +
           "°";
+        drawChart(times, actuals, apparents);
       }
       run();
     </script>
