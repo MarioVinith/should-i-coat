@@ -100,6 +100,38 @@
         <div id="note"></div>
       </div>
     </main>
-    <script></script>
+    <script>
+      function getLocation() {
+        const MELBOURNE = { lat: -37.8136, lon: 144.9631, fallback: true };
+        return new Promise((resolve) => {
+          if (!navigator.geolocation) {
+            resolve(MELBOURNE);
+            return;
+          }
+          let settled = false;
+          const done = (value) => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+          };
+          const timer = setTimeout(() => done(MELBOURNE), 8000);
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              clearTimeout(timer);
+              done({
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                fallback: false,
+              });
+            },
+            () => {
+              clearTimeout(timer);
+              done(MELBOURNE);
+            },
+            { timeout: 8000 }
+          );
+        });
+      }
+    </script>
   </body>
 </html>
