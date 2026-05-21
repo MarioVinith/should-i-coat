@@ -47,6 +47,22 @@
       header #loc {
         text-align: right;
       }
+      #verdict {
+        font-size: clamp(56px, 18vw, 320px);
+        font-weight: 800;
+        line-height: 0.92;
+        letter-spacing: -0.04em;
+        transition: color 200ms ease;
+      }
+      #verdict.puff {
+        color: var(--puff);
+      }
+      #verdict.normal {
+        color: var(--normal);
+      }
+      #verdict.none {
+        color: var(--none);
+      }
     </style>
   </head>
   <body>
