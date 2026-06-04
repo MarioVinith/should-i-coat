@@ -29,6 +29,61 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
+        position: relative;
+        overflow-x: hidden;
+      }
+      /* Rain layer — sits absolutely positioned over the verdict area only,
+         stopping at the chart card's top edge. Each .raindrop is generated
+         in JS with randomized inline styles (left, animation-duration,
+         animation-delay) so the falls feel chaotic rather than regimented. */
+      .rain-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 0;
+        opacity: 0;
+        transition: opacity 600ms ease;
+      }
+      .rain-layer.is-active {
+        opacity: 1;
+      }
+      .raindrop {
+        position: absolute;
+        top: -20px;
+        width: 1px;
+        height: 14px;
+        background: linear-gradient(
+          to bottom,
+          rgba(180, 200, 255, 0) 0%,
+          rgba(180, 200, 255, 0.65) 100%
+        );
+        border-radius: 1px;
+        animation-name: rain-drop;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        will-change: transform, opacity;
+      }
+      @keyframes rain-drop {
+        0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+        10%  { opacity: 1; }
+        70%  { opacity: 1; }
+        100% { transform: translate3d(0, var(--fall, 400px), 0); opacity: 0; }
+      }
+      /* Honor reduced-motion: don't run the animation. */
+      @media (prefers-reduced-motion: reduce) {
+        .raindrop { animation: none; opacity: 0; }
+        .rain-layer.is-active { opacity: 0.3; }
+      }
+      /* Ensure real content sits above the rain layer. */
+      header,
+      main,
+      footer.credit {
+        position: relative;
+        z-index: 1;
       }
       header {
         display: flex;
@@ -54,10 +109,15 @@
         min-height: 0;
       }
       .verdict-wrap {
+        position: relative;
         display: flex;
         flex-direction: column;
         gap: 12px;
         padding: 24px 24px 8px;
+      }
+      .verdict-wrap > *:not(.rain-layer) {
+        position: relative;
+        z-index: 1;
       }
       .mode-toggle {
         display: inline-flex;
@@ -100,11 +160,28 @@
         font-weight: 500;
       }
       #verdict {
-        font-size: clamp(56px, 14vw, 240px);
+        font-size: clamp(48px, 11vw, 160px);
         font-weight: 800;
         line-height: 1;
         letter-spacing: -0.04em;
         transition: color 200ms ease;
+      }
+      #umbrella {
+        font-size: clamp(24px, 5vw, 72px);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        margin-top: -4px;
+        transition: color 200ms ease;
+      }
+      #umbrella.wet {
+        color: var(--puff);
+      }
+      #umbrella.dry {
+        color: var(--none);
+      }
+      #umbrella[hidden] {
+        display: none;
       }
       #sub {
         font-size: clamp(20px, 2.2vw, 28px);
@@ -203,6 +280,7 @@
     </header>
     <main>
       <div class="verdict-wrap">
+        <div id="rain-layer" class="rain-layer" aria-hidden="true"></div>
         <div class="mode-toggle" role="tablist" aria-label="Where are you today?">
           <button
             type="button"
@@ -221,6 +299,7 @@
         </div>
         <div id="eyebrow">Today you should…</div>
         <div id="verdict" class="loading">Checking the sky</div>
+        <div id="umbrella" hidden></div>
         <div id="sub"></div>
         <div id="note"></div>
       </div>
@@ -276,7 +355,7 @@
           encodeURIComponent(lat) +
           "&longitude=" +
           encodeURIComponent(lon) +
-          "&hourly=temperature_2m,apparent_temperature" +
+          "&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability" +
           "&timezone=auto" +
           "&forecast_days=1";
         const res = await fetch(url);
@@ -357,6 +436,22 @@
           if (counts[key] > counts[winner]) winner = key;
         }
         return { key: winner, label: labels[winner] };
+      }
+      // Umbrella decision: binary. Take a brolly if ANY hour 8am–8pm has both
+      // a meaningful chance of rain (>=50%) AND a non-trivial volume (>=0.2mm).
+      // Both signals must agree — 60% chance of a sprinkle isn't worth carrying
+      // a thing around all day, and neither is 0.4mm at 20% confidence.
+      function decideUmbrella(precipHourly, probHourly, hourlyTimes) {
+        if (!precipHourly || !probHourly) return false;
+        for (let i = 0; i < hourlyTimes.length; i++) {
+          const hour = new Date(hourlyTimes[i]).getHours();
+          if (hour < 8 || hour > 20) continue;
+          const p = precipHourly[i];
+          const q = probHourly[i];
+          if (p == null || q == null) continue;
+          if (q >= 50 && p >= 0.2) return true;
+        }
+        return false;
       }
       // Home mode: current hour's apparent temp only. Two states.
       // Sentence form: "Today you should… <label>"
@@ -489,11 +584,44 @@
         mode: "outside",
         forecast: null,
       };
+      // Spawn N raindrops into the rain layer once, with randomized positions
+      // and animation timings so the falls feel chaotic rather than uniform.
+      // Each drop animates by translateY equal to the rain layer's current
+      // height (set as a CSS custom property), so drops always land exactly
+      // at the bottom of the verdict area — i.e. on top of the chart card.
+      function buildRainDrops() {
+        const layer = document.getElementById("rain-layer");
+        if (!layer) return;
+        const DROP_COUNT = 100;
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < DROP_COUNT; i++) {
+          const drop = document.createElement("span");
+          drop.className = "raindrop";
+          const left = Math.random() * 100; // %
+          const duration = 0.6 + Math.random() * 0.7; // 0.6–1.3s
+          const delay = Math.random() * -1.5; // negative => already in-flight
+          drop.style.left = left + "%";
+          drop.style.animationDuration = duration.toFixed(2) + "s";
+          drop.style.animationDelay = delay.toFixed(2) + "s";
+          frag.appendChild(drop);
+        }
+        layer.appendChild(frag);
+        // Recompute fall distance on resize so drops always land on the
+        // chart card's top edge regardless of viewport height.
+        const updateFall = () => {
+          layer.style.setProperty("--fall", layer.clientHeight + "px");
+        };
+        updateFall();
+        window.addEventListener("resize", updateFall);
+      }
       function renderVerdict() {
         const verdictEl = document.getElementById("verdict");
+        const umbrellaEl = document.getElementById("umbrella");
         if (!state.forecast) return;
         const times = state.forecast.hourly.time;
         const apparents = state.forecast.hourly.apparent_temperature;
+        const precip = state.forecast.hourly.precipitation;
+        const probs = state.forecast.hourly.precipitation_probability;
         const verdict =
           state.mode === "home"
             ? decideHome(apparents, times)
@@ -501,6 +629,29 @@
         verdictEl.classList.remove("loading", "puff", "normal", "none");
         verdictEl.classList.add(verdict.key);
         verdictEl.textContent = verdict.label;
+        // Umbrella line: only relevant outdoors. Always shown when outside —
+        // the copy and color flip to communicate the answer.
+        umbrellaEl.classList.remove("wet", "dry");
+        let isWet = false;
+        if (state.mode === "outside") {
+          isWet = decideUmbrella(precip, probs, times);
+          umbrellaEl.textContent = isWet
+            ? "Take the brolly."
+            : "Skip the brolly.";
+          umbrellaEl.classList.add(isWet ? "wet" : "dry");
+          umbrellaEl.hidden = false;
+        } else {
+          umbrellaEl.textContent = "";
+          umbrellaEl.hidden = true;
+        }
+        // TEMPORARY: triggering the rain animation on DRY days so you can
+        // preview it locally without waiting for rain. Flip back to `isWet`
+        // once preview is done.
+        const layer = document.getElementById("rain-layer");
+        if (layer) {
+          const showRain = state.mode === "outside" && !isWet;
+          layer.classList.toggle("is-active", showRain);
+        }
       }
       function wireToggle() {
         const buttons = document.querySelectorAll(".mode-option");
@@ -524,6 +675,7 @@
         const subEl = document.getElementById("sub");
         const verdictEl = document.getElementById("verdict");
         wireToggle();
+        buildRainDrops();
         const { lat, lon, fallback } = await getLocation();
         if (fallback) {
           locEl.textContent = "Melbourne (default)";
