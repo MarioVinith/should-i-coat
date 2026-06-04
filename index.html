@@ -649,7 +649,7 @@
         // once preview is done.
         const layer = document.getElementById("rain-layer");
         if (layer) {
-          const showRain = state.mode === "outside" && !isWet;
+          const showRain = state.mode === "outside" && isWet;
           layer.classList.toggle("is-active", showRain);
         }
       }
