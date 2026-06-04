@@ -17,13 +17,50 @@ The verdict is based on **apparent ("feels like") temperature**, not raw air tem
 **Window:** the 13 hourly readings from **8am through 8pm in the location's local time, today**. Use Open-Meteo's `timezone=auto` so the timestamps you receive are already in the location's local zone. Filter the hourly array to the 13 entries whose local hour is between 8 and 20 inclusive.
 
 **Classification per hour:**
-- apparent temp `< 10°C` → puff
-- apparent temp `10°C` to `18°C` → normal
+- apparent temp `< 12°C` → puff
+- apparent temp `12°C` to `18°C` → normal
 - apparent temp `> 18°C` → none
+
+(Threshold history: the puff cutoff was originally `<10°C` but bumped to `<12°C` after lived-experience testing in Melbourne — 10–12° apparent days were verdicting as "normal jacket" when they realistically called for a puffer.)
 
 **Aggregation:** majority vote. Count how many of the 13 hours fall in each bucket. The bucket with the most hours wins. On ties, prefer the **colder** bucket (better to bring a jacket you don't need than freeze).
 
 **Past hours:** if the user opens the site at 6pm, eight of the 13 decision hours are already in the past. Open-Meteo serves recent observed values for those hours through the same endpoint, so the same request gives you a sensible mix of observed-where-possible and forecast-where-not. No special handling needed beyond requesting `forecast_days=1` (which includes today from 00:00 local).
+
+## Mode toggle: outside vs at home
+
+A small two-button toggle above the eyebrow flips the page between **outside** and **at home** modes. The page **always opens in `outside` mode** — there is no persistence (no `localStorage`). The toggle is session-only; reload, and you're back outside.
+
+### Outside mode (default)
+Uses `decideOutside()` — the majority-vote rule above, across 8am–8pm apparent temps.
+
+### At-home mode
+Uses `decideHome()`. **Reads only the current hour's apparent temperature**, not the 8am–8pm window. Two states:
+
+- apparent temp `< 17°C` → `Throw on a hoodie and trackies.` (uses the `puff` color class — cold blue)
+- apparent temp `≥ 17°C` → `Be good in your pyjamas.` (uses the `none` color class — warm amber)
+
+Rationale for using only the current hour: when you're at home, you're not committing to a jacket for the day — you're putting on whatever feels right *right now*. Indoor temps don't track outdoor highs the way "what to wear outside all day" does.
+
+If the current hour's value is missing from the hourly array (shouldn't happen but defensively), fall back to the first non-null apparent reading. Never crash.
+
+## Umbrella verdict
+
+A second, smaller verdict line below the jacket verdict, decided by `decideUmbrella()`. **Binary** — always shows in outside mode, hidden in at-home mode.
+
+**Rule:** For each hour in the 8am–8pm window, the day is "wet" if **any single hour** has both:
+- `precipitation_probability ≥ 50%` **AND**
+- `precipitation ≥ 0.2 mm`
+
+Both signals must agree. A 60%-chance-of-trace-drizzle day shouldn't trigger an umbrella, and neither should a 30%-chance-of-5mm day (the model isn't confident enough). The "any hour" rule (rather than majority vote) is intentional — rain is asymmetric in a way temperature isn't. A single rainy afternoon hour means you want a brolly even if the rest of the day is dry.
+
+**Copy:**
+- wet → `Take the brolly.` (puff blue)
+- dry → `Skip the brolly.` (none amber)
+
+**Visibility:** the entire umbrella line is hidden when `state.mode === "home"`. No "umbrella indoors" verdict ever shows.
+
+**Sentence continuity:** the umbrella line reads as a second imperative clause from the eyebrow. e.g. *"Today you should… Bundle up. Take the brolly."*
 
 ## Inputs
 
@@ -35,19 +72,20 @@ The verdict is based on **apparent ("feels like") temperature**, not raw air tem
 https://api.open-meteo.com/v1/forecast
   ?latitude={lat}
   &longitude={lon}
-  &hourly=temperature_2m,apparent_temperature
+  &hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability
   &timezone=auto
   &forecast_days=1
 ```
 
-**Reverse geocoding** for the location name in the header. Open-Meteo provides this too:
+`temperature_2m` and `apparent_temperature` feed the jacket verdict and the chart. `precipitation` (mm/hr) and `precipitation_probability` (%) feed the umbrella verdict.
 
-```
-https://geocoding-api.open-meteo.com/v1/reverse
-  ?latitude={lat}&longitude={lon}&count=1&language=en&format=json
-```
+**Reverse geocoding** for the location name in the header. Two-tier:
 
-Use `results[0].name + ", " + results[0].country_code` (or similar). If the call fails, fall back to showing the rounded coordinates ("-37.81, 144.96").
+1. **BigDataCloud (preferred):** `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude={lat}&longitude={lon}&localityLanguage=en`. Returns suburb-level resolution (e.g. `"St Kilda, Melbourne"`) which Open-Meteo's geocoder cannot. Format: `{locality}, {city}` when they differ; just `{city}` when they're the same.
+2. **Open-Meteo (fallback):** `https://geocoding-api.open-meteo.com/v1/reverse?latitude={lat}&longitude={lon}&count=1&language=en&format=json`. City-level only.
+3. **Coordinates (last resort):** rounded to two decimals, e.g. `"-37.81, 144.96"`.
+
+**Melbourne fallback:** when geolocation is denied/unavailable, skip reverse geocoding entirely and display the hardcoded string `Melbourne (default)` — no API call needed for a known constant.
 
 ## UI
 
@@ -74,11 +112,29 @@ Use `results[0].name + ", " + results[0].country_code` (or similar). If the call
 
 **Verdict copy (exact strings):**
 
-| Bucket | Text          | Color (on dark bg)         |
-| ------ | ------------- | -------------------------- |
-| puff   | `Bundle up.`     | deep navy — `#3b5fe6`      |
-| normal | `Pack a jacket.` | muted teal — `#1fb88e`     |
-| none   | `You're good.`   | warm amber — `#f5a623`     |
+Outside mode — `decideOutside()`:
+
+| Bucket | Text                          | Color (on dark bg)         |
+| ------ | ----------------------------- | -------------------------- |
+| puff   | `Bundle up.`                  | deep navy — `#3b5fe6`      |
+| normal | `Pack a jacket.`              | muted teal — `#1fb88e`     |
+| none   | `Live a little, no jacket.`   | warm amber — `#f5a623`     |
+
+At-home mode — `decideHome()`, two states based on the *current hour's* apparent temp:
+
+| Bucket | Threshold | Text                                | Reused class |
+| ------ | --------- | ----------------------------------- | ------------ |
+| cold   | `< 17°C`  | `Throw on a hoodie and trackies.`   | `puff`       |
+| warm   | `≥ 17°C`  | `Be good in your pyjamas.`          | `none`       |
+
+Umbrella verdict — `decideUmbrella()`, binary, always shown in outside mode (hidden in home mode):
+
+| State | Trigger                                            | Text                  | Color                 |
+| ----- | -------------------------------------------------- | --------------------- | --------------------- |
+| wet   | Any hour 8am–8pm with `prob ≥ 50%` AND `precip ≥ 0.2mm` | `Take the brolly.` | `var(--puff)` blue    |
+| dry   | Otherwise                                          | `Skip the brolly.`    | `var(--none)` amber   |
+
+All five verdict strings (three outside + two at-home) are written to flow grammatically from the eyebrow text "Today you should…". The umbrella line reads as a second clause: e.g. "Today you should… Bundle up. Take the brolly."
 
 Eyebrow text above the verdict: `Today you should…`
 
@@ -110,6 +166,17 @@ A legend sits above or below the chart with small chips: `● Actual   ╌ Feels
 **Now-line.** A subtle vertical line at the current hour, 30% opacity, behind the data lines.
 
 **No data dots, smooth curves** (`tension: 0.35`, `pointRadius: 0`).
+
+## Rain animation
+
+When the umbrella verdict is `wet` AND the mode is `outside`, the page rains in the background. Implementation choices, in case they need re-tuning:
+
+- **CSS-only animation.** 100 individual `<span class="raindrop">` elements are generated once on page load (`buildRainDrops()`), each with randomized inline styles: `left` (0–100%), `animation-duration` (0.6–1.3s), and `animation-delay` (negative, so each drop starts mid-flight). No `requestAnimationFrame` loop; the browser handles compositing.
+- **The randomized delay matters.** Without it, all drops fall in unison and the effect reads as a sliding wallpaper. With negative-staggered delays, the eye sees drops at varying stages of their fall, which reads as actual rain.
+- **Bounded to the verdict area only.** The `.rain-layer` is `position: absolute` inside `.verdict-wrap`, so drops fall from the top of the verdict area and "land" exactly at the chart card's top edge. Drops fade out in their final ~30% of travel so the landing looks like absorption, not a hard cutoff. The `--fall` CSS custom property is set from the layer's `clientHeight` on load and on `resize`, so the landing point follows the chart card regardless of viewport height.
+- **Drop appearance.** Each drop is a 1px × 14px vertical streak with a top-transparent → bottom-light-blue gradient, mimicking motion-blur on a real raindrop.
+- **Toggling.** `renderVerdict()` toggles `.is-active` on the layer. Class drives a 600ms opacity fade — the rain crossfades in/out rather than popping.
+- **Reduced motion.** Honors `prefers-reduced-motion: reduce`. The drops stop animating; the layer is dimmed to 30% opacity. The signal "it's raining" survives, but no motion.
 
 ## Loading and error states
 

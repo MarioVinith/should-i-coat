@@ -421,7 +421,7 @@
           if (hour < 8 || hour > 20) continue;
           const t = apparentHourly[i];
           if (t == null) continue;
-          if (t < 10) counts.puff++;
+          if (t < 12) counts.puff++;
           else if (t <= 18) counts.normal++;
           else counts.none++;
         }
